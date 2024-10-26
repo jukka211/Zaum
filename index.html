@@ -52,7 +52,8 @@
       createCanvas(windowWidth, windowHeight);
 
       const button = select('#motionBtn');
-      button.mousePressed(() => {
+      // Use 'touchend' for better compatibility on iOS
+      button.touchEnded(() => {
         button.hide();
         requestMotionPermission();
       });
@@ -90,11 +91,13 @@
               console.log('Motion permission granted');
               window.addEventListener('devicemotion', deviceMoved);
             } else {
-              console.log('Motion permission denied');
+              console.log('Motion permission denied by user');
+              alert('Motion permission denied. Please enable it in device settings if needed.');
             }
           })
           .catch((error) => {
             console.error("Error requesting motion permission:", error);
+            alert('Error requesting motion permission. Please try again or check device settings.');
           });
       } else {
         // For browsers that don’t need explicit permission (e.g., Android devices)
