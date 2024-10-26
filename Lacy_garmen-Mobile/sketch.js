@@ -7,7 +7,7 @@ let permissionGranted = false; // Flag to check if permission is granted
 
 function preload() {
     // preload OTF font file
-    font = loadFont('/Arial Bold.ttf');
+    font = loadFont('Lacy_garmen-Mobile/Arial Bold.ttf');
 }
 
 function setup() {
