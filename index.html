@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iOS Motion Debug</title>
+  <title>Motion Responsive Text</title>
   <style>
     body {
       margin: 0;
@@ -35,20 +35,49 @@
   <button id="motionBtn">Enable Motion</button>
 
   <script>
+    let font;
+    let fSize;
+    let msg;
+    let pts = [];
+    let translateAmount = 40;
     let permissionGranted = false;
     let translateX = 0;
     let translateY = 0;
     let rotationAngle = 0;
 
+    function preload() {
+      font = loadFont('https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/assets/Arial.ttf');
+    }
+
     function setup() {
-      createCanvas(windowWidth, windowHeight);
+      createCanvas(1000, 1000);
       const button = select('#motionBtn');
       button.mousePressed(requestMotionPermission);
+
+      fSize = 256;
+      textFont(font);
+      textSize(fSize);
+      msg = 'Zaum';
+      pts = font.textToPoints(msg, 0, 0, fSize, {
+        sampleFactor: 0.1,
+        simplifyThreshold: 0.0
+      });
+
+      let bounds = font.textBounds(msg, 0, 0, fSize);
+      let centerX = (width - bounds.w) / 2 - bounds.x;
+      let centerY = (height - bounds.h) / 2 - bounds.y;
+
+      for (let i = 0; i < pts.length; i++) {
+        pts[i].x += centerX;
+        pts[i].y += centerY;
+      }
+
+      stroke(255);
+      strokeWeight(10);
+      noFill();
     }
 
     function requestMotionPermission() {
-      console.log("Requesting motion permission...");
-
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
           .then((response) => {
@@ -73,37 +102,39 @@
     }
 
     function setupMotionHandlers() {
-      // Listen to deviceorientation for tilt-based interactions
       window.addEventListener('deviceorientation', (event) => {
         if (!permissionGranted) return;
 
-        // Map tilt to translateX and translateY values
+        // Use tilt values to set translation and rotation angle
         translateX = map(event.gamma, -90, 90, -width / 2, width / 2);
         translateY = map(event.beta, -90, 90, -height / 2, height / 2);
-        rotationAngle = radians(event.alpha); // Rotation based on compass direction
-        console.log(`Orientation - Beta (Y): ${event.beta}, Gamma (X): ${event.gamma}, Alpha (Rotation): ${event.alpha}`);
-      });
-
-      // Alternative: Fallback for acceleration data
-      window.addEventListener('devicemotion', (event) => {
-        if (!permissionGranted) return;
-
-        translateX = event.accelerationIncludingGravity.x * 10;
-        translateY = event.accelerationIncludingGravity.y * 10;
-        console.log(`Motion - Acceleration X: ${event.accelerationIncludingGravity.x}, Y: ${event.accelerationIncludingGravity.y}`);
+        rotationAngle = radians(event.alpha); // Use compass direction for rotation
       });
     }
 
     function draw() {
       background(255);
+      blendMode(DIFFERENCE);
 
-      // Apply translation and rotation based on motion
       push();
       translate(width / 2 + translateX, height / 2 + translateY);
-      rotate(rotationAngle);
-      fill(0, 102, 153);
-      rect(-50, -50, 100, 100); // Centered square
+
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        push();
+        translate(p.x - width / 2, p.y - height / 2);
+        rotate(rotationAngle); // Rotate based on device orientation
+        line(
+          -translateAmount / 10, 
+          -translateAmount / 10, 
+          translateAmount / 10, 
+          translateAmount / 10
+        );
+        pop();
+      }
+
       pop();
+      blendMode(BLEND);
     }
   </script>
 </body>
