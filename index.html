@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Motion-Based Interactive Text</title>
+  <title>iOS Motion Debug</title>
   <style>
     body {
       margin: 0;
@@ -12,7 +12,6 @@
       align-items: center;
       height: 100vh;
       background-color: #333;
-      overflow: hidden;
     }
     #motionBtn {
       position: absolute;
@@ -36,95 +35,75 @@
   <button id="motionBtn">Enable Motion</button>
 
   <script>
-    let font;
-    let fSize;
-    let msg;
-    let pts = [];
-    let translateAmount = 40;
     let permissionGranted = false;
-
-    function preload() {
-      // Load font (local or from a CDN); replace with your font if needed.
-      font = loadFont('https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/assets/Arial.ttf');
-    }
+    let translateX = 0;
+    let translateY = 0;
+    let rotationAngle = 0;
 
     function setup() {
-      createCanvas(1000, 1000);
+      createCanvas(windowWidth, windowHeight);
       const button = select('#motionBtn');
       button.mousePressed(requestMotionPermission);
-
-      fSize = 256;
-      textFont(font);
-      textSize(fSize);
-      msg = 'Zaum';
-      pts = font.textToPoints(msg, 0, 0, fSize, {
-        sampleFactor: 0.1,
-        simplifyThreshold: 0.0
-      });
-
-      let bounds = font.textBounds(msg, 0, 0, fSize);
-      let centerX = (width - bounds.w) / 2 - bounds.x;
-      let centerY = (height - bounds.h) / 2 - bounds.y;
-
-      for (let i = 0; i < pts.length; i++) {
-        pts[i].x += centerX;
-        pts[i].y += centerY;
-      }
-
-      stroke(255);
-      strokeWeight(10);
-      noFill();
     }
 
     function requestMotionPermission() {
+      console.log("Requesting motion permission...");
+
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
           .then((response) => {
             if (response === 'granted') {
               permissionGranted = true;
+              console.log("Motion permission granted");
               select('#motionBtn').hide();
-              window.addEventListener('deviceorientation', handleOrientation);
+              setupMotionHandlers();
             } else {
-              alert('Motion permission denied');
+              alert("Motion permission denied");
             }
           })
           .catch((error) => {
-            console.error("Motion permission error:", error);
+            console.error("Permission request error:", error);
           });
       } else {
+        console.log("DeviceOrientationEvent.requestPermission not required or supported");
         permissionGranted = true;
+        setupMotionHandlers();
         select('#motionBtn').hide();
-        window.addEventListener('deviceorientation', handleOrientation);
       }
     }
 
-    function handleOrientation(event) {
-      if (!permissionGranted) return;
-      translateAmount = map(event.beta, -90, 90, 0, 100); // Adjust translate amount based on tilt
+    function setupMotionHandlers() {
+      // Listen to deviceorientation for tilt-based interactions
+      window.addEventListener('deviceorientation', (event) => {
+        if (!permissionGranted) return;
+
+        // Map tilt to translateX and translateY values
+        translateX = map(event.gamma, -90, 90, -width / 2, width / 2);
+        translateY = map(event.beta, -90, 90, -height / 2, height / 2);
+        rotationAngle = radians(event.alpha); // Rotation based on compass direction
+        console.log(`Orientation - Beta (Y): ${event.beta}, Gamma (X): ${event.gamma}, Alpha (Rotation): ${event.alpha}`);
+      });
+
+      // Alternative: Fallback for acceleration data
+      window.addEventListener('devicemotion', (event) => {
+        if (!permissionGranted) return;
+
+        translateX = event.accelerationIncludingGravity.x * 10;
+        translateY = event.accelerationIncludingGravity.y * 10;
+        console.log(`Motion - Acceleration X: ${event.accelerationIncludingGravity.x}, Y: ${event.accelerationIncludingGravity.y}`);
+      });
     }
 
     function draw() {
       background(255);
-      blendMode(DIFFERENCE);
 
-      // Fallback for motion permission denied
-      const d = translateAmount || 40; 
-      const angle = radians(d); // Calculate rotation angle based on translation
-
+      // Apply translation and rotation based on motion
       push();
-      translate(width / 2, height / 2);
-
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
-        push();
-        translate(p.x - width / 2, p.y - height / 2);
-        rotate(angle);
-        line(-d * translateAmount / 100, -d * translateAmount / 100, +d * translateAmount / 100, +d * translateAmount / 100);
-        pop();
-      }
-
+      translate(width / 2 + translateX, height / 2 + translateY);
+      rotate(rotationAngle);
+      fill(0, 102, 153);
+      rect(-50, -50, 100, 100); // Centered square
       pop();
-      blendMode(BLEND);
     }
   </script>
 </body>
