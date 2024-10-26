@@ -4,6 +4,7 @@ let msg; // text to write
 let pts = []; // store path data
 let translateAmount = 40; // variable to control translation amount
 let permissionGranted = false; // Flag to check if permission is granted
+let permissionButton; // Global variable for the permission button
 
 function preload() {
     // preload OTF font file
@@ -11,23 +12,24 @@ function preload() {
 }
 
 function setup() {
-    createCanvas(1000, 1000);
-    
+    createCanvas(windowWidth, windowHeight);
+
     // Check if permission is needed
     if (
         typeof DeviceMotionEvent !== 'undefined' &&
         typeof DeviceMotionEvent.requestPermission === 'function'
     ) {
         // iOS 13+ devices
-        let permissionButton = createButton('Allow Motion Access');
+        permissionButton = createButton('Allow Motion Access');
         permissionButton.style('font-size', '24px');
         permissionButton.position(width / 2 - 100, height / 2 - 20);
         permissionButton.mousePressed(requestMotionPermission);
+        noLoop(); // Stop the draw loop until permission is granted
     } else {
         // Non iOS 13+ devices
         permissionGranted = true;
     }
-    
+
     fSize = 256;
     textFont(font);
     textSize(fSize);
@@ -39,7 +41,7 @@ function setup() {
 
     // Calculate the bounding box of the points to center them
     let bounds = font.textBounds(msg, 0, 0, fSize);
-    
+
     // Translate points to center based on the bounding box
     let centerX = (width - bounds.w) / 2 - bounds.x;
     let centerY = (height - bounds.h) / 2 - bounds.y;
@@ -61,13 +63,12 @@ function draw() {
         textSize(32);
         fill(0);
         text('Please allow motion access', width / 2, height / 2 - 60);
-        noLoop(); // Stop looping until permission is granted
         return;
     }
-    
+
     background(255);
     blendMode(DIFFERENCE);
-    
+
     // Use device rotation data instead of mouseX and mouseY
     // Map rotationX to 'd' (distance)
     const maxTilt = 30; // Maximum tilt angle in degrees to consider
@@ -110,8 +111,8 @@ function requestMotionPermission() {
                     permissionGranted = true;
                     console.log('Motion permission granted');
                     // Remove the permission button
-                    this.remove();
-                    loop(); // Start the draw loop
+                    permissionButton.remove();
+                    loop(); // Resume the draw loop
                 } else {
                     console.log('Motion permission denied');
                 }
@@ -120,6 +121,10 @@ function requestMotionPermission() {
     } else {
         // For browsers that don't require permission (e.g., Android devices)
         permissionGranted = true;
-        loop(); // Start the draw loop
+        loop(); // Resume the draw loop
     }
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
