@@ -51,8 +51,11 @@
     function setup() {
       createCanvas(windowWidth, windowHeight);
 
-      let button = select('#motionBtn');
-      button.mousePressed(requestMotionPermission);
+      const button = select('#motionBtn');
+      button.mousePressed(() => {
+        button.hide();
+        requestMotionPermission();
+      });
 
       fSize = 256;
       textFont(font);
@@ -78,23 +81,26 @@
     }
 
     function requestMotionPermission() {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      console.log("Requesting motion permission...");
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
         DeviceOrientationEvent.requestPermission()
           .then((response) => {
             if (response === 'granted') {
               permissionGranted = true;
               console.log('Motion permission granted');
-              select('#motionBtn').hide();
               window.addEventListener('devicemotion', deviceMoved);
             } else {
               console.log('Motion permission denied');
             }
           })
-          .catch(console.error);
+          .catch((error) => {
+            console.error("Error requesting motion permission:", error);
+          });
       } else {
+        // For browsers that don’t need explicit permission (e.g., Android devices)
         permissionGranted = true;
-        select('#motionBtn').hide();
         window.addEventListener('devicemotion', deviceMoved);
+        console.log('Motion permission automatically granted (non-iOS device)');
       }
     }
 
