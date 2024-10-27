@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Motion Responsive Text</title>
+  <title>Motion Responsive Text - Debugging Version</title>
   <style>
     body {
       margin: 0;
@@ -39,7 +39,6 @@
     let fSize;
     let msg;
     let pts = [];
-    let translateAmount = 40;
     let permissionGranted = false;
     let translateX = 0;
     let translateY = 0;
@@ -105,33 +104,35 @@
       window.addEventListener('deviceorientation', (event) => {
         if (!permissionGranted) return;
 
-        // Apply tilt values directly
+        // Use tilt values to set translation and rotation angle
         translateX = map(event.gamma, -90, 90, -width / 4, width / 4);  // Left-right tilt
         translateY = map(event.beta, -90, 90, -height / 4, height / 4);  // Front-back tilt
         rotationAngle = radians(event.alpha); // Device rotation angle
+
+        console.log(`Device Tilt -> TranslateX: ${translateX}, TranslateY: ${translateY}, RotationAngle: ${rotationAngle}`);
       });
     }
 
     function draw() {
       background(255);
-      blendMode(DIFFERENCE);
 
-      // Center and apply translation/rotation
+      if (!permissionGranted) return;
+
+      // Centered translation and rotation
       push();
       translate(width / 2 + translateX, height / 2 + translateY);
       rotate(rotationAngle);
 
-      // Draw each point with rotation and line effect
+      // Draw each point as a small square
       for (let i = 0; i < pts.length; i++) {
         const p = pts[i];
         push();
         translate(p.x - width / 2, p.y - height / 2);
-        line(-translateAmount / 10, -translateAmount / 10, translateAmount / 10, translateAmount / 10);
+        rect(-5, -5, 10, 10); // Draw small squares at each text point
         pop();
       }
 
       pop();
-      blendMode(BLEND);
     }
   </script>
 </body>
