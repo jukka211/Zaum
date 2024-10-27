@@ -51,7 +51,10 @@
     function setup() {
       createCanvas(windowWidth, windowHeight);
       const button = select('#motionBtn');
-      button.mousePressed(requestMotionPermission);
+      button.mousePressed(() => {
+        console.log("Button clicked - attempting to request motion permission.");
+        requestMotionPermission();
+      });
 
       fSize = 256;
       textFont(font);
@@ -78,22 +81,27 @@
 
     function requestMotionPermission() {
       if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        console.log("DeviceOrientationEvent.requestPermission is supported.");
         DeviceOrientationEvent.requestPermission()
           .then((response) => {
             if (response === 'granted') {
               permissionGranted = true;
-              console.log("Motion permission granted");
+              alert("Motion permission granted!");
+              console.log("Motion permission granted.");
               select('#motionBtn').hide();
               setupMotionHandlers();
             } else {
-              alert("Motion permission denied");
+              alert("Motion permission denied. Please enable it in device settings.");
+              console.log("Motion permission denied by user.");
             }
           })
           .catch((error) => {
+            alert("Error requesting motion permission. Please try again.");
             console.error("Permission request error:", error);
           });
       } else {
-        console.log("DeviceOrientationEvent.requestPermission not required or supported");
+        alert("DeviceOrientationEvent.requestPermission is not supported on this device.");
+        console.log("DeviceOrientationEvent.requestPermission not supported or required.");
         permissionGranted = true;
         setupMotionHandlers();
         select('#motionBtn').hide();
@@ -104,7 +112,7 @@
       window.addEventListener('deviceorientation', (event) => {
         if (!permissionGranted) return;
 
-        // Use tilt values to set translation and rotation angle
+        // Apply tilt values directly
         translateX = map(event.gamma, -90, 90, -width / 4, width / 4);  // Left-right tilt
         translateY = map(event.beta, -90, 90, -height / 4, height / 4);  // Front-back tilt
         rotationAngle = radians(event.alpha); // Device rotation angle
