@@ -65,14 +65,14 @@
               select('#motionBtn').hide();
               setupMotionHandlers();
             } else {
-              alert("Motion permission denied");
+              alert("Motion permission denied. Please enable motion in device settings.");
             }
           })
           .catch((error) => {
             console.error("Permission request error:", error);
           });
       } else {
-        console.log("DeviceOrientationEvent.requestPermission not required or supported");
+        console.log("DeviceOrientationEvent.requestPermission not required or supported on this device.");
         permissionGranted = true;
         setupMotionHandlers();
         select('#motionBtn').hide();
@@ -80,12 +80,13 @@
     }
 
     function setupMotionHandlers() {
-      // Listen to deviceorientation for tilt-based interactions
-      window.addEventListener('deviceorientation', (event) => {
-        if (!permissionGranted) return;
-        betaTilt = event.beta || 0; // Tilt on the Y-axis
-        gammaTilt = event.gamma || 0; // Tilt on the X-axis
-      });
+      if (permissionGranted) {
+        // Listen to deviceorientation for tilt-based interactions
+        window.addEventListener('deviceorientation', (event) => {
+          betaTilt = event.beta || 0; // Tilt on the Y-axis
+          gammaTilt = event.gamma || 0; // Tilt on the X-axis
+        });
+      }
     }
 
     function draw() {
