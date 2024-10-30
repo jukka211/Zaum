@@ -3,20 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kinetic Typography with Motion</title>
+  <title>Kinetic Typography with Resizing Ellipses</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
   <script>
-    let x = 0;
-    let y = 0;
-    let angle = 0;
+    let points = []; // To store points from text
     let textSizeValue = 50;
+    let ellipseSizes = []; // Array to store sizes of each ellipse
+    let angle = 0;
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
       textAlign(CENTER, CENTER);
       textSize(textSizeValue);
+
+      // Convert text to points
+      points = font.textToPoints('Move Me', width / 2 - 100, height / 2, textSizeValue, {
+        sampleFactor: 0.1 // Adjust for more or fewer points
+      });
+
+      // Initialize ellipse sizes
+      ellipseSizes = Array(points.length).fill(10);
+
       let btn = createButton("Enable Motion");
       btn.position(10, 10);
       btn.mousePressed(function() {
@@ -36,28 +45,21 @@
       background(255);
       fill(0);
 
-      // Apply transformations for kinetic effect
-      push();
-      translate(x, y);
-      rotate(angle);
-      textSize(textSizeValue);
-      text("Move Me", 0, 0);
-      pop();
+      // Draw ellipses at each point
+      for (let i = 0; i < points.length; i++) {
+        const pt = points[i];
+        ellipse(pt.x, pt.y, ellipseSizes[i]);
+      }
     }
 
-    /* Kinetic Typography Logic */
     function deviceMoved() {
-      // Randomly change position within the canvas dimensions
-      x = random(width);
-      y = random(height);
-      
-      // Randomly change the angle of the text
-      angle += radians(10);
-      
-      // Change text size slightly to create a pulsating effect
-      textSizeValue = random(30, 70);
-      
-      // Keep angle within bounds of 360 degrees
+      // Change each ellipse size randomly within a range
+      for (let i = 0; i < ellipseSizes.length; i++) {
+        ellipseSizes[i] = random(5, 20); // Resizes between 5 and 20 pixels
+      }
+
+      // Rotate the angle of each point slightly for a wobbling effect
+      angle += radians(5);
       if (angle > TWO_PI) {
         angle = 0;
       }
