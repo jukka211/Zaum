@@ -8,35 +8,47 @@
 </head>
 <body>
   <script>
-    let points = []; // To store points from text
+    let font;
+    let points = [];
     let textSizeValue = 50;
-    let ellipseSizes = []; // Array to store sizes of each ellipse
+    let ellipseSizes = [];
     let angle = 0;
+
+    function preload() {
+      font = loadFont('https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/Poppins-Regular.ttf');
+    }
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
       textAlign(CENTER, CENTER);
       textSize(textSizeValue);
 
-      // Convert text to points
+      // Convert text to points once the font is loaded
       points = font.textToPoints('Move Me', width / 2 - 100, height / 2, textSizeValue, {
-        sampleFactor: 0.1 // Adjust for more or fewer points
+        sampleFactor: 0.1
       });
 
-      // Initialize ellipse sizes
       ellipseSizes = Array(points.length).fill(10);
 
+      // Create the motion permission button
       let btn = createButton("Enable Motion");
-      btn.position(10, 10);
+      btn.position(20, 20); // Explicit position to make it visible
+      btn.style('padding', '10px'); // Add padding for better visibility
+      btn.style('font-size', '16px'); // Adjust font size
+
+      // Request device motion permission
       btn.mousePressed(function() {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission()
             .then(response => {
               if (response == 'granted') {
                 console.log("Permission granted");
+                btn.hide(); // Hide button after permission is granted
               }
             })
             .catch(console.error);
+        } else {
+          console.log("Device Motion API not supported or permission not required");
         }
       });
     }
@@ -45,7 +57,6 @@
       background(255);
       fill(0);
 
-      // Draw ellipses at each point
       for (let i = 0; i < points.length; i++) {
         const pt = points[i];
         ellipse(pt.x, pt.y, ellipseSizes[i]);
@@ -53,12 +64,10 @@
     }
 
     function deviceMoved() {
-      // Change each ellipse size randomly within a range
       for (let i = 0; i < ellipseSizes.length; i++) {
         ellipseSizes[i] = random(5, 20); // Resizes between 5 and 20 pixels
       }
 
-      // Rotate the angle of each point slightly for a wobbling effect
       angle += radians(5);
       if (angle > TWO_PI) {
         angle = 0;
