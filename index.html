@@ -5,14 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exploding Points Effect</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    #motionBtn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #motionBtn:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
+
+  <button id="motionBtn">Enable Motion</button>
+
   <script>
     let font;
     let points = [];
     let textString = "EXPLODE";
     let betaTilt = 0;
     let gammaTilt = 0;
+    let permissionGranted = false;
 
     function preload() {
       // Replace with any preferred font file path
@@ -22,18 +42,50 @@
     function setup() {
       createCanvas(windowWidth, windowHeight);
       textSize(128);
+
       // Convert text to points
       points = font.textToPoints(textString, 100, 300, 128, {
         sampleFactor: 0.1
       });
 
-      // Set up device orientation event listener
-      if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', (event) => {
-          betaTilt = event.beta || 0; // Tilt on the Y-axis
-          gammaTilt = event.gamma || 0; // Tilt on the X-axis
-        });
+      // Setup motion permission button
+      const button = select('#motionBtn');
+      button.mousePressed(requestMotionPermission);
+    }
+
+    function requestMotionPermission() {
+      console.log("Requesting motion permission...");
+
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then((response) => {
+            if (response === 'granted') {
+              permissionGranted = true;
+              console.log("Motion permission granted");
+              select('#motionBtn').hide();
+              setupMotionHandlers();
+            } else {
+              alert("Motion permission denied");
+            }
+          })
+          .catch((error) => {
+            console.error("Permission request error:", error);
+          });
+      } else {
+        console.log("DeviceOrientationEvent.requestPermission not required or supported");
+        permissionGranted = true;
+        setupMotionHandlers();
+        select('#motionBtn').hide();
       }
+    }
+
+    function setupMotionHandlers() {
+      // Listen to deviceorientation for tilt-based interactions
+      window.addEventListener('deviceorientation', (event) => {
+        if (!permissionGranted) return;
+        betaTilt = event.beta || 0; // Tilt on the Y-axis
+        gammaTilt = event.gamma || 0; // Tilt on the X-axis
+      });
     }
 
     function draw() {
