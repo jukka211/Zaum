@@ -3,115 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exploding Points Effect</title>
+  <title>Motion Detection</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-  <style>
-    #motionBtn {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #motionBtn:hover {
-      background-color: #0056b3;
-    }
-  </style>
 </head>
 <body>
-
-  <button id="motionBtn">Enable Motion</button>
-
   <script>
-    let font;
-    let points = [];
-    let textString = "EXPLODE";
-    let betaTilt = 0;
-    let gammaTilt = 0;
-    let permissionGranted = false;
-
-    function preload() {
-      // Replace with any preferred font file path
-      font = loadFont('https://cdnjs.cloudflare.com/ajax/libs/topcoat-font/0.9.1/SourceCodePro-Bold.ttf');
-    }
+    let value = 0;
 
     function setup() {
       createCanvas(windowWidth, windowHeight);
-      textSize(128);
-
-      // Convert text to points
-      points = font.textToPoints(textString, 100, 300, 128, {
-        sampleFactor: 0.1
+      let btn = createButton("Motion");
+      btn.position(10, 10); // Set button position
+      btn.mousePressed(function() {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission()
+            .then(response => {
+              if (response == 'granted') {
+                console.log("Permission granted");
+              }
+            })
+            .catch(console.error);
+        }
       });
-
-      // Setup motion permission button
-      const button = select('#motionBtn');
-      button.mousePressed(requestMotionPermission);
-    }
-
-    function requestMotionPermission() {
-      console.log("Requesting motion permission...");
-
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission()
-          .then((response) => {
-            if (response === 'granted') {
-              permissionGranted = true;
-              console.log("Motion permission granted");
-              select('#motionBtn').hide();
-              setupMotionHandlers();
-            } else {
-              alert("Motion permission denied. Please enable motion in device settings.");
-            }
-          })
-          .catch((error) => {
-            console.error("Permission request error:", error);
-          });
-      } else {
-        console.log("DeviceOrientationEvent.requestPermission not required or supported on this device.");
-        permissionGranted = true;
-        setupMotionHandlers();
-        select('#motionBtn').hide();
-      }
-    }
-
-    function setupMotionHandlers() {
-      if (permissionGranted) {
-        // Listen to deviceorientation for tilt-based interactions
-        window.addEventListener('deviceorientation', (event) => {
-          betaTilt = event.beta || 0; // Tilt on the Y-axis
-          gammaTilt = event.gamma || 0; // Tilt on the X-axis
-        });
-      }
     }
 
     function draw() {
       background(255);
-      fill(0);
-      noStroke();
-
-      // Calculate the force based on tilt
-      let force = map(betaTilt, -180, 180, 0, 10);
-
-      // Draw each point with exploding effect
-      for (let i = 0; i < points.length; i++) {
-        let p = points[i];
-        // Calculate angle and offset based on center of the canvas
-        let angle = atan2(p.y - height / 2, p.x - width / 2);
-        let offsetX = cos(angle) * force;
-        let offsetY = sin(angle) * force;
-
-        ellipse(p.x + offsetX, p.y + offsetY, 5, 5);
-      }
+      fill(value, 0, 0);
+      rect(0, 0, width, height);
     }
 
-    // Adjust canvas size on window resize
-    function windowResized() {
-      resizeCanvas(windowWidth, windowHeight);
+    /* The deviceMoved() function is called when the device is moved by more than the threshold value along X, Y or Z axis. 
+       The default threshold is set to 0.5. The threshold value can be changed using setMoveThreshold().
+    */
+    function deviceMoved() {
+      value += 5;
+      if (value > 255) {
+        value = 0;
+      }
     }
   </script>
 </body>
