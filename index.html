@@ -3,22 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Motion Detection</title>
+  <title>Kinetic Typography with Pointing and Wave</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
 </head>
 <body>
   <script>
-    let value = 0;
-
+    let targetX, targetY;
+    let waveAmplitude = 20;
+    let textString = "Follow Me!";
+    
     function setup() {
       createCanvas(windowWidth, windowHeight);
-      let btn = createButton("Motion");
-      btn.position(10, 10); // Set button position
+      textAlign(CENTER, CENTER);
+      textSize(32);
+      targetX = width / 2;
+      targetY = height / 2;
+      
+      let btn = createButton("Enable Motion");
+      btn.position(10, 10);
       btn.mousePressed(function() {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission()
             .then(response => {
-              if (response == 'granted') {
+              if (response === 'granted') {
                 console.log("Permission granted");
               }
             })
@@ -29,18 +36,37 @@
 
     function draw() {
       background(255);
-      fill(value, 0, 0);
-      rect(0, 0, width, height);
+      fill(0);
+
+      // Gradually move text toward the target point
+      let moveSpeed = 0.05;
+      let currentX = lerp(width / 2, targetX, moveSpeed);
+      let currentY = lerp(height / 2, targetY, moveSpeed);
+
+      // Draw each character of the text with wave effect
+      for (let i = 0; i < textString.length; i++) {
+        let x = currentX + i * 30 - (textString.length * 15); // Spread letters out
+        let y = currentY + sin(frameCount * 0.1 + i) * waveAmplitude; // Wave effect
+        text(textString[i], x, y);
+      }
     }
 
-    /* The deviceMoved() function is called when the device is moved by more than the threshold value along X, Y or Z axis. 
-       The default threshold is set to 0.5. The threshold value can be changed using setMoveThreshold().
-    */
+    /* Kinetic Typography Logic */
     function deviceMoved() {
-      value += 5;
-      if (value > 255) {
-        value = 0;
-      }
+      // Adjust the wave amplitude based on device movement
+      waveAmplitude = map(rotationX, -90, 90, 10, 40); // Change amplitude with device rotation
+    }
+
+    // Optional: Let the target point follow the mouse (or user's finger on touch devices)
+    function mouseMoved() {
+      targetX = mouseX;
+      targetY = mouseY;
+    }
+
+    function touchMoved() {
+      targetX = touchX;
+      targetY = touchY;
+      return false; // Prevent default scrolling on touch
     }
   </script>
 </body>
